@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>朗读时间</title>
+    <style type="text/css">
+        .custom-mid {
+            text-align: center;
+        }
+        .big-readable-font{
+            font-size: 50px;
+        }
+    </style>
+</head>
+<body>
+<div id="readable-time" class="custom-mid big-readable-font">
+    <p>{{ message }}</p>
+    <video :src="tts_video" autoplay>
+        您的浏览器不支持 video 标签。
+    </video>
+</div>
+<script src="node_modules/vue/dist/vue.js"></script>
+<script type="application/javascript">
+    var tts_url = 'http://tts.baidu.com/text2audio?lan=zh&ie=UTF-8&spd=2&text=';
+
+
+    var readable_time = new Vue({
+        el: '#readable-time',
+        data: {
+            message: (function () {
+                return gen_readable_time();
+            })(),
+            tts_video:(function () {
+                return tts_url + gen_readable_time();
+            })(),
+        }
+    });
+
+
+    function gen_readable_time(){
+        var Now = new Date();
+        Date.prototype.format = function(fmt) {
+            var o = {
+                "M+" : this.getMonth()+1,                 //月份
+                "d+" : this.getDate(),                    //日
+                "h+" : this.getHours(),                   //小时
+                "m+" : this.getMinutes(),                 //分
+                "s+" : this.getSeconds(),                 //秒
+                "q+" : Math.floor((this.getMonth()+3)/3), //季度
+                "S"  : this.getMilliseconds()             //毫秒
+            };
+            if(/(y+)/.test(fmt)) {
+                fmt=fmt.replace(RegExp.$1, (this.getFullYear()+"").substr(4 - RegExp.$1.length));
+            }
+            for(var k in o) {
+                if(new RegExp("("+ k +")").test(fmt)){
+                    fmt = fmt.replace(RegExp.$1, (RegExp.$1.length==1) ? (o[k]) : (("00"+ o[k]).substr((""+ o[k]).length)));
+                }
+            }
+            return fmt;
+        };
+        return Now.format("当前时间：hh点mm分");
+    }
+
+    // 每 500毫秒 秒更新时间
+    (function () {
+        var AutoUpdateInterVal = setInterval(function () {
+            readable_time.message = gen_readable_time();
+        }, 500);
+    })();
+
+    // 每 5分钟 报时
+    (function () {
+        var AutoUpdateInterVal = setInterval(function () {
+            doReportTime();
+        }, 5 * 60 * 1000);
+    })();
+
+    // 一次报时
+    function doReportTime() {
+        readable_time.tts_video = tts_url + gen_readable_time();
+    }
+
+</script>
+</body>
+</html>
